@@ -1,0 +1,7 @@
+language Essence 1.3
+
+given n : int
+letting item be domain int(1..n)
+given corr : matrix indexed by [item, item] of int(-99999..99999)
+find p : function (total, bijective) int(1..n) --> int(1..n)
+maximising sum i : item . corr[i,p(i)]
