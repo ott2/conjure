@@ -1,0 +1,9 @@
+language ESSENCE' 1.0
+
+given n: int
+letting threshold be 3 * 10**4 * n
+given corr: matrix indexed by [int(1..n), int(1..n)] of int(-99999..99999)
+find p: matrix indexed by [int(1..n)] of int(1..n)
+such that
+    allDiff(p),
+    (sum i : int(1..n) . corr[i, p[i]]) > threshold
