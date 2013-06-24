@@ -162,7 +162,7 @@ updateVar prev cur total (name,dom,VarInt lower upper) | cur <= 1 =
                 <+> "normal=" <+> pretty (mid - 1) <+> "bi="  <+> pretty (upper - move - 1)
                 <+> "c/t" <+> pretty (cur,total)
                 <+> "res=" ) 
-    (name, dom, VarInt lower (upper - move - 1)  )
+    (name, dom, VarInt lower (mid - 1)  )
 
     where
     mid  = (lower + upper) `quot` 2
@@ -177,7 +177,7 @@ updateVar prev cur total (name,dom,VarInt lower upper) =
                 <+> "normal=" <+> pretty (mid + 1) <+> "bi="  <+> pretty (lower + move + 1)
                 <+> "c/t" <+> pretty (cur,total)
                 <+> "res=" ) 
-    (name, dom, VarInt (lower + move + 1)  upper )
+    (name, dom, VarInt (lower + move + 1)  (mid + 1) )
 
     where
     mid  = (lower + upper) `quot` 2
