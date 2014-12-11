@@ -1,4 +1,4 @@
-.PHONY: install refreeze ghci clean
+.PHONY: install refreeze ghci clean prefixed
 
 install:
 	@bash etc/build/install.sh
@@ -23,3 +23,7 @@ ghci:
 
 clean:
 	@bash etc/build/clean.sh
+
+prefixed:
+	BIN_DIR="dist/conjure-new" make install && \
+	mv "dist/conjure-new/conjure" "${HOME}/.cabal/bin/conjureNew"
