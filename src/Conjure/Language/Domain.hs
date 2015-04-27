@@ -807,7 +807,7 @@ instance (Pretty r, Pretty a) => Pretty (Domain r a) where
         = hang ("partition" <+> prettyAttrs r attrs <+> "from") 4 (pretty inner)
 
     pretty (DomainGraph r attrs inner)
-        = hang ("graph" <+> prettyAttrs r attrs <+> "on") 4 (pretty inner)
+        = hang ("graph" <+> prettyAttrs r attrs <+> "of") 4 (pretty inner)
 
     pretty d@(DomainOp{}) = pretty (show d)
 

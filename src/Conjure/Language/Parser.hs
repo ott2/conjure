@@ -216,6 +216,7 @@ parseDomainWithRepr
             , pSequence
             , pRelation
             , pPartition
+            , pGraph
             , DomainMetaVar <$> parseMetaVariable, parens parseDomainWithRepr
             ]
 
@@ -333,6 +334,14 @@ parseDomainWithRepr
             lexeme L_from
             y <- parseDomainWithRepr
             return $ DomainPartition r x y
+
+        pGraph = do
+            lexeme L_graph
+            r <- parseRepr
+            x <- parseGraphAttr
+            lexeme L_of
+            y <- parseDomainWithRepr
+            return $ DomainGraph r x y
 
 parseAttributes :: Parser (DomainAttributes Expression)
 parseAttributes = do
@@ -456,6 +465,26 @@ parsePartitionAttr = do
         as -> fail ("incompatible attributes:" <+> stringToDoc (show as))
     let isRegular  = DAName "regular"  `elem` attrs
     return PartitionAttr {..}
+
+parseGraphAttr :: Parser (GraphAttr Expression)
+parseGraphAttr = do
+    DomainAttributes attrs <- parseAttributes
+    numVerts <- case filterAttrName ["numVerts", "minNumVerts", "maxNumVerts"] attrs of
+        [] -> return SizeAttr_None
+        [DANameValue "numVerts"    a] -> return (SizeAttr_Size a)
+        [DANameValue "minNumVerts" a] -> return (SizeAttr_MinSize a)
+        [DANameValue "maxNumVerts" a] -> return (SizeAttr_MaxSize a)
+        [DANameValue "maxNumVerts" b, DANameValue "minNumVerts" a] -> return (SizeAttr_MinMaxSize a b)
+        as -> fail ("incompatible attributes:" <+> stringToDoc (show as))
+    numEdges <- case filterAttrName ["numEdges", "minNumEdges", "maxNumEdges"] attrs of
+        [] -> return SizeAttr_None
+        [DANameValue "numEdges"    a] -> return (SizeAttr_Size a)
+        [DANameValue "minNumEdges" a] -> return (SizeAttr_MinSize a)
+        [DANameValue "maxNumEdges" a] -> return (SizeAttr_MaxSize a)
+        [DANameValue "maxNumEdges" b, DANameValue "minNumEdges" a] -> return (SizeAttr_MinMaxSize a b)
+        as -> fail ("incompatible attributes:" <+> stringToDoc (show as))
+    let isComplete  = DAName "complete"  `elem` attrs
+    return GraphAttr {..}
 
 filterAttrName :: Ord a => [Name] -> [DomainAttribute a] -> [DomainAttribute a]
 filterAttrName keep = sort . filter f
