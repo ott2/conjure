@@ -163,6 +163,7 @@ operators =
     , ( L_supsetEq    , FNone  ,  400 )
     , ( L_subsequence , FNone  ,  400 )
     , ( L_substring   , FNone  ,  400 )
+    , ( L_substringCyclic, FNone, 400 )
     , ( L_in          , FNone  ,  550 )
     -- , ( L_Colon     , FNone  ,   10 )
     , ( L_HasRepr     , FNone  ,   10 )

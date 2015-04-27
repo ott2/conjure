@@ -45,6 +45,9 @@ mkBinOp op a b =
                     L_supsetEq    -> \ x y -> inject $ MkOpSupsetEq    $ OpSupsetEq    x y
                     L_subsequence -> \ x y -> inject $ MkOpSubsequence $ OpSubsequence x y
                     L_substring   -> \ x y -> inject $ MkOpSubstring   $ OpSubstring   x y
+                    L_substringCyclic 
+                                  -> \ x y -> inject $ MkOpSubstringCyclic   
+                                                                       $ OpSubstringCyclic x y
                     L_intersect   -> \ x y -> inject $ MkOpIntersect   $ OpIntersect   x y
                     L_union       -> \ x y -> inject $ MkOpUnion       $ OpUnion       x y
                     L_LexLt       -> \ x y -> inject $ MkOpLexLt       $ OpLexLt       x y

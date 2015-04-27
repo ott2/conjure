@@ -515,6 +515,27 @@ rule_Substring = "substring" `namedRule` theRule where
             )
     theRule _ = na "rule_Substring"
 
+rule_SubstringCyclic :: Rule
+rule_SubstringCyclic = "substringCyclic" `namedRule` theRule where
+    theRule [essence| &a substringCyclic &b |] = do
+        TypeSequence{} <- typeOf a
+        TypeSequence{} <- typeOf b
+
+        return
+            ( "Horizontal rule for cyclic substring on 2 sequences"
+            , do
+                (offsetPat, offset) <- quantifiedVar
+                (valuePat , value ) <- quantifiedVar
+                return $ make opOr $ Comprehension
+                        (make opAnd $ Comprehension
+                            [essence| &value[2] = image(&b, ((&offset + &value[1]) % |&b|) + 1) |]
+                            [ Generator (GenInExpr valuePat a)
+                            ]
+                        )
+                        [ Generator (GenInExpr offsetPat [essence| defined(&b) |]) ]
+                        -- [ Generator (GenDomainNoRepr offsetPat $ mkDomainIntB 0 [essence| |&b| |])]
+            )
+    theRule _ = na "rule_SubstringCyclic"
 
 rule_Subsequence :: Rule
 rule_Subsequence = "subsequence" `namedRule` theRule where
