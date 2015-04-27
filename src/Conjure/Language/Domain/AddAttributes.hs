@@ -23,10 +23,12 @@ allSupportedAttributes =
              , "minOccur", "maxOccur"
              , "numParts", "minNumParts", "maxNumParts"
              , "partSize", "minPartSize", "maxPartSize"
+             , "numVerts", "numEdges"
              ] ++
     map (,0) [ "total"
              , "injective", "surjective", "bijective"
              , "regular"
+             , "complete"
              ] ++
     map (,0) [ "reflexive"
              , "irreflexive"
@@ -450,6 +452,78 @@ addAttributeToDomain domain@(DomainPartition r partitionAttr inner) = updater wh
                         ]
     updater AttrName_regular Nothing =
             return $ DomainPartition r (partitionAttr { isRegular  = True }) inner
+    updater attr _ =
+            fail $ vcat [ "Unsupported attribute" <+> pretty attr
+                        , "For the domain:" <+> pretty domain
+                        ]
+
+addAttributeToDomain domain@(DomainGraph r graphAttr inner) = updater where
+    updater attr (Just val) = case attr of
+        AttrName_numVerts ->
+            case numVerts graphAttr of
+                SizeAttr_Size{} -> fail $ "Cannot add a numVerts attribute to this domain:" <++> pretty domain
+                _               -> return $ DomainGraph r (graphAttr { numVerts = SizeAttr_Size val }) inner
+        AttrName_minNumVerts -> do
+            let fails = fail $ "Cannot add a minNumVerts attribute to this domain:" <++> pretty domain
+            case numVerts graphAttr of
+                SizeAttr_Size{}       -> fails
+                SizeAttr_MinSize{}    -> fails
+                SizeAttr_MinMaxSize{} -> fails
+                SizeAttr_None{}       -> return $ DomainGraph r
+                                            (graphAttr { numVerts = SizeAttr_MinSize val })
+                                            inner
+                SizeAttr_MaxSize maxS -> return $ DomainGraph r
+                                            (graphAttr { numVerts = SizeAttr_MinMaxSize val maxS })
+                                            inner
+        AttrName_maxNumVerts -> do
+            let fails = fail $ "Cannot add a maxNumVerts attribute to this domain:" <++> pretty domain
+            case numVerts graphAttr of
+                SizeAttr_Size{}       -> fails
+                SizeAttr_MaxSize{}    -> fails
+                SizeAttr_MinMaxSize{} -> fails
+                SizeAttr_None{}       -> return $ DomainGraph r
+                                            (graphAttr { numVerts = SizeAttr_MaxSize val })
+                                            inner
+                SizeAttr_MinSize minS -> return $ DomainGraph r
+                                            (graphAttr { numVerts = SizeAttr_MinMaxSize minS val })
+                                            inner
+
+        AttrName_numEdges ->
+            case numEdges graphAttr of
+                SizeAttr_Size{} -> fail $ "Cannot add a numEdges attribute to this domain:" <++> pretty domain
+                _               -> return $ DomainGraph r (graphAttr { numEdges = SizeAttr_Size val }) inner
+        AttrName_minNumEdges -> do
+            let fails = fail $ "Cannot add a minNumEdges attribute to this domain:" <++> pretty domain
+            case numEdges graphAttr of
+                SizeAttr_Size{}       -> fails
+                SizeAttr_MinSize{}    -> fails
+                SizeAttr_MinMaxSize{} -> fails
+                SizeAttr_None{}       -> return $ DomainGraph r
+                                            (graphAttr { numEdges = SizeAttr_MinSize val })
+                                            inner
+                SizeAttr_MaxSize maxS -> return $ DomainGraph r
+                                            (graphAttr { numEdges = SizeAttr_MinMaxSize val maxS })
+                                            inner
+        AttrName_maxNumEdges -> do
+            let fails = fail $ "Cannot add a maxNumEdges attribute to this domain:" <++> pretty domain
+            case numEdges graphAttr of
+                SizeAttr_Size{}       -> fails
+                SizeAttr_MaxSize{}    -> fails
+                SizeAttr_MinMaxSize{} -> fails
+                SizeAttr_None{}       -> return $ DomainGraph r
+                                            (graphAttr { numEdges = SizeAttr_MaxSize val })
+                                            inner
+                SizeAttr_MinSize minS -> return $ DomainGraph r
+                                            (graphAttr { numEdges = SizeAttr_MinMaxSize minS val })
+                                            inner
+
+
+        _ ->
+            fail $ vcat [ "Unsupported attribute" <+> pretty attr
+                        , "For the domain:" <+> pretty domain
+                        ]
+    updater AttrName_complete Nothing =
+            return $ DomainGraph r (graphAttr { isComplete  = True }) inner
     updater attr _ =
             fail $ vcat [ "Unsupported attribute" <+> pretty attr
                         , "For the domain:" <+> pretty domain

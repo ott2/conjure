@@ -34,6 +34,7 @@ data Type
     | TypeSequence Type
     | TypeRelation [Type]
     | TypePartition Type
+    | TypeGraph Type
     deriving (Eq, Ord, Show, Data, Typeable, Generic)
 
 instance Serialize Type
@@ -66,6 +67,7 @@ instance Pretty Type where
     pretty (TypeFunction fr to) = "function" <+> pretty fr <+> "-->" <+> pretty to
     pretty (TypeSequence x) = "sequence of" <+> pretty x
     pretty (TypePartition x) = "partition from" <+> pretty x
+    pretty (TypeGraph     x) = "graph on" <+> pretty x
     pretty (TypeRelation xs) = "relation of" <+> prettyList prParens " *" xs
 
 -- | Check whether two types unify or not.
@@ -103,6 +105,7 @@ typeUnify (TypeFunction a1 a2) (TypeFunction b1 b2) = and (zipWith typeUnify [a1
 typeUnify (TypeSequence a) (TypeSequence b) = typeUnify a b
 typeUnify (TypeRelation as) (TypeRelation bs) = and (zipWith typeUnify as bs)
 typeUnify (TypePartition a) (TypePartition b) = typeUnify a b
+typeUnify (TypeGraph a) (TypeGraph b) = typeUnify a b -- ****
 typeUnify _ _ = False
 
 -- | Check whether a given list of types unify with each other or not.
@@ -151,6 +154,7 @@ mostDefined = foldr f TypeAny
         f (TypeSequence a) (TypeSequence b) = TypeSequence (f a b)
         f (TypeRelation as) (TypeRelation bs) = TypeRelation (zipWith f as bs)
         f (TypePartition a) (TypePartition b) = TypePartition (f a b)
+        f (TypeGraph a) (TypeGraph b) = TypeGraph (f a b)
         f _ _ = TypeAny
 
 homoType :: MonadFail m => Doc -> [Type] -> m Type
@@ -171,6 +175,7 @@ innerTypeOf (TypeFunction a b) = return (TypeTuple [a,b])
 innerTypeOf (TypeSequence t) = return (TypeTuple [TypeInt,t])
 innerTypeOf (TypeRelation ts) = return (TypeTuple ts)
 innerTypeOf (TypePartition t) = return (TypeSet t)
+innerTypeOf (TypeGraph t) = return t
 innerTypeOf t = fail ("innerTypeOf:" <+> pretty (show t))
 
 isPrimitiveType :: Type -> Bool

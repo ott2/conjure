@@ -12,6 +12,7 @@ module Conjure.Language.Domain
     , SequenceAttr(..)
     , RelationAttr(..), BinaryRelationAttrs(..), BinaryRelationAttr(..)
     , PartitionAttr(..)
+    , GraphAttr(..)
     , AttrName(..)
     , DomainAttributes(..), DomainAttribute(..)         -- only for parsing
     , isPrimitiveDomain, domainCanIndexMatrix, getIndices
@@ -60,6 +61,7 @@ data Domain r x
     | DomainSequence  r (SequenceAttr x) (Domain r x)
     | DomainRelation  r (RelationAttr x) [Domain r x]
     | DomainPartition r (PartitionAttr x) (Domain r x)
+    | DomainGraph     r (GraphAttr x) (Domain r x)
     | DomainOp Name [Domain r x]
     | DomainReference Name (Maybe (Domain r x))
     | DomainMetaVar String
@@ -123,6 +125,7 @@ typeOfDomain (DomainFunction  _ _ x y) = TypeFunction   <$> typeOf x <*> typeOf 
 typeOfDomain (DomainSequence  _ _ x  ) = TypeSequence   <$> typeOf x
 typeOfDomain (DomainRelation  _ _ xs ) = TypeRelation   <$> mapM typeOf xs
 typeOfDomain (DomainPartition _ _ x  ) = TypePartition  <$> typeOf x
+typeOfDomain (DomainGraph     _ _ x  ) = TypeGraph      <$> typeOf x
 typeOfDomain DomainOp{} = bug "typeOf DomainOp"
 typeOfDomain (DomainReference _ (Just d)) = typeOf d
 typeOfDomain (DomainReference nm Nothing) = bug $ "typeOf: DomainReference" <+> pretty nm
@@ -159,6 +162,8 @@ changeRepr rep = go
             DomainRelation rep attr (map go ds)
         go (DomainPartition _   attr d) =
             DomainPartition rep attr (go d)
+        go (DomainGraph _   attr d) =
+            DomainGraph rep attr (go d)
         go (DomainOp op ds) = DomainOp op (map go ds)
         go (DomainReference x r) = DomainReference x (fmap go r)
         go (DomainMetaVar x) = DomainMetaVar x
@@ -189,6 +194,7 @@ reprTree (DomainFunction  r _ a b) = Tree (Just r) [reprTree a, reprTree b]
 reprTree (DomainSequence  r _ a  ) = Tree (Just r) [reprTree a]
 reprTree (DomainRelation  r _ as ) = Tree (Just r) (map reprTree as)
 reprTree (DomainPartition r _ a  ) = Tree (Just r) [reprTree a]
+reprTree (DomainGraph     r _ a  ) = Tree (Just r) [reprTree a]
 reprTree DomainOp{}        = Tree Nothing []
 reprTree DomainReference{} = Tree Nothing []
 reprTree DomainMetaVar{}   = Tree Nothing []
@@ -214,6 +220,7 @@ applyReprTree (DomainFunction  _ attr a b) (Tree (Just r) [aRepr, bRepr]) = Doma
 applyReprTree (DomainSequence  _ attr a  ) (Tree (Just r) [aRepr]) = DomainSequence r attr <$> applyReprTree a aRepr
 applyReprTree (DomainRelation  _ attr as ) (Tree (Just r) asRepr) = DomainRelation r attr <$> zipWithM applyReprTree as asRepr
 applyReprTree (DomainPartition _ attr a  ) (Tree (Just r) [aRepr]) = DomainPartition r attr <$> applyReprTree a aRepr
+applyReprTree (DomainGraph     _ attr a  ) (Tree (Just r) [aRepr]) = DomainGraph r attr <$> applyReprTree a aRepr
 applyReprTree dom@DomainOp{}        (Tree Nothing []) = return (defRepr dom)
 applyReprTree dom@DomainReference{} (Tree Nothing []) = return (defRepr dom)
 applyReprTree dom@DomainMetaVar{}   (Tree Nothing []) = return (defRepr dom)
@@ -256,6 +263,13 @@ data AttrName
     | AttrName_surjective
     | AttrName_bijective
     | AttrName_regular
+    | AttrName_numVerts
+    | AttrName_minNumVerts
+    | AttrName_maxNumVerts
+    | AttrName_numEdges
+    | AttrName_minNumEdges
+    | AttrName_maxNumEdges
+    | AttrName_complete
     -- bin rel ones
     | AttrName_reflexive
     | AttrName_irreflexive
@@ -293,6 +307,13 @@ instance Pretty AttrName where
     pretty AttrName_surjective = "surjective"
     pretty AttrName_bijective = "bijective"
     pretty AttrName_regular = "regular"
+    pretty AttrName_complete = "complete"
+    pretty AttrName_numVerts = "numVerts"
+    pretty AttrName_minNumVerts = "minNumVerts"
+    pretty AttrName_maxNumVerts = "maxNumVerts"
+    pretty AttrName_numEdges = "numEdges"
+    pretty AttrName_minNumEdges = "minNumEdges"
+    pretty AttrName_maxNumEdges = "maxNumEdges"
     pretty AttrName_reflexive = "reflexive"
     pretty AttrName_irreflexive = "irreflexive"
     pretty AttrName_coreflexive = "coreflexive"
@@ -323,6 +344,13 @@ instance IsString AttrName where
     fromString "surjective" = AttrName_surjective
     fromString "bijective" = AttrName_bijective
     fromString "regular" = AttrName_regular
+    fromString "complete" = AttrName_complete
+    fromString "numVerts" = AttrName_numVerts
+    fromString "minNumVerts" = AttrName_minNumVerts
+    fromString "maxNumVerts" = AttrName_maxNumVerts
+    fromString "numEdges" = AttrName_numEdges
+    fromString "minNumEdges" = AttrName_minNumEdges
+    fromString "maxNumEdges" = AttrName_maxNumEdges
     fromString "reflexive" = AttrName_reflexive
     fromString "irreflexive" = AttrName_irreflexive
     fromString "coreflexive" = AttrName_coreflexive
@@ -604,6 +632,46 @@ instance Pretty a => Pretty (PartitionAttr a) where
                 then prEmpty
                 else prettyList prParens "," inside
 
+data GraphAttr a = GraphAttr
+    { numVerts          :: SizeAttr a
+    , numEdges          :: SizeAttr a
+    , isComplete        :: Bool
+    --, isRegular :: Bool
+    --, isPath    :: Bool. Should this just be a different type?
+    --, isCycle   :: Bool. Again, maybe a different type
+    }
+    deriving (Eq, Ord, Show, Data, Functor, Traversable, Foldable, Typeable, Generic)
+instance Serialize a => Serialize (GraphAttr a)
+instance Hashable  a => Hashable  (GraphAttr a)
+instance ToJSON    a => ToJSON    (GraphAttr a) where toJSON = genericToJSON jsonOptions
+instance FromJSON  a => FromJSON  (GraphAttr a) where parseJSON = genericParseJSON jsonOptions
+instance Default (GraphAttr a) where def = GraphAttr def def False
+instance Pretty a => Pretty (GraphAttr a) where
+    pretty (GraphAttr a b c) =
+        let inside = filter (/=prEmpty) [ prettyNVerts a
+                                        , prettyNEdges b
+                                        , prettyCom c
+                                        ]
+
+            prettyNVerts SizeAttr_None = prEmpty
+            prettyNVerts (SizeAttr_Size       x  ) = "numVerts"    <+> pretty x
+            prettyNVerts (SizeAttr_MinSize    x  ) = "minNumVerts" <+> pretty x
+            prettyNVerts (SizeAttr_MaxSize    x  ) = "maxNumVerts" <+> pretty x
+            prettyNVerts (SizeAttr_MinMaxSize x y) = "minNumVerts" <+> pretty x <+> ", maxNumVerts" <+> pretty y
+
+            prettyNEdges SizeAttr_None = prEmpty
+            prettyNEdges (SizeAttr_Size       x  ) = "numEdges"    <+> pretty x
+            prettyNEdges (SizeAttr_MinSize    x  ) = "minNumEdges" <+> pretty x
+            prettyNEdges (SizeAttr_MaxSize    x  ) = "maxNumEdges" <+> pretty x
+            prettyNEdges (SizeAttr_MinMaxSize x y) = "minNumEdges" <+> pretty x <+> ", maxNumEdges" <+> pretty y
+
+            prettyCom False = prEmpty
+            prettyCom True  = "complete"
+
+        in  if null inside
+                then prEmpty
+                else prettyList prParens "," inside
+
 
 data DomainAttributes a = DomainAttributes [DomainAttribute a]
     deriving (Eq, Ord, Show, Data, Functor, Traversable, Foldable, Typeable, Generic)
@@ -738,6 +806,9 @@ instance (Pretty r, Pretty a) => Pretty (Domain r a) where
     pretty (DomainPartition r attrs inner)
         = hang ("partition" <+> prettyAttrs r attrs <+> "from") 4 (pretty inner)
 
+    pretty (DomainGraph r attrs inner)
+        = hang ("graph" <+> prettyAttrs r attrs <+> "on") 4 (pretty inner)
+
     pretty d@(DomainOp{}) = pretty (show d)
 
     pretty (DomainReference x _) = pretty x
@@ -793,6 +864,8 @@ normaliseDomain  norm (DomainSequence  r attr dom      ) = DomainSequence  r (fm
 normaliseDomain  norm (DomainRelation  r attr doms     ) = DomainRelation  r (fmap norm attr)
                                                                              (map (normaliseDomain norm) doms)
 normaliseDomain  norm (DomainPartition r attr dom      ) = DomainPartition r (fmap norm attr)
+                                                                             (normaliseDomain norm dom)
+normaliseDomain  norm (DomainGraph     r attr dom      ) = DomainGraph     r (fmap norm attr)
                                                                              (normaliseDomain norm dom)
 normaliseDomain _norm d = d
 
