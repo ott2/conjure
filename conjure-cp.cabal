@@ -159,6 +159,7 @@ Library
                      , Conjure.Representations.Relation.RelationAsSet
                      , Conjure.Representations.Partition.Occurrence
                      , Conjure.Representations.Partition.PartitionAsSet
+                     , Conjure.Representations.Graph.GraphAsSets
 
                      -- definitions of rules
                      , Conjure.Rules.Definition

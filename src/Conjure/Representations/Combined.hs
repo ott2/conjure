@@ -35,6 +35,7 @@ import Conjure.Representations.Relation.RelationAsMatrix
 import Conjure.Representations.Relation.RelationAsSet
 import Conjure.Representations.Partition.Occurrence
 import Conjure.Representations.Partition.PartitionAsSet
+import Conjure.Representations.Graph.GraphAsSets
 
 
 -- | Refine (down) a domain, outputting refinement expressions (X) one level (1).
@@ -167,6 +168,9 @@ dispatch domain = do
             "PartitionAsSet"                -> partitionAsSet dispatch
             "Occurrence"                    -> partitionOccurrence
             _ -> nope
+        DomainGraph r _ _ -> case r of
+            "GraphAsSets"                   -> graphAsSets dispatch
+            _ -> nope
         _ -> nope
 
 
@@ -186,6 +190,7 @@ allReprs =
     , [ functionAsRelation dispatch
       , relationAsSet dispatch
       , partitionAsSet dispatch
+      , graphAsSets dispatch
       ]
     ]
 
