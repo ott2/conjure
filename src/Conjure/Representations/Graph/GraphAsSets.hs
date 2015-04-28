@@ -28,26 +28,31 @@ graphAsSets _ = Representation chck downD structuralCons downC up
         nameVerts name = mconcat [name, "_", "GraphAsSets_Verts"]
         nameEdges name = mconcat [name, "_", "GraphAsSets_Edges"]
 
+        repr s = case s of
+                   SizeAttr_Size{} -> "Explicit"
+                   _               -> "ExplicitVarSizeWithMarker"
+
+        getVerts (DomainGraph "GraphAsSets" (GraphAttr nVerts _ _) innerDomain) =
+            return (DomainSet (repr nVerts) (SetAttr nVerts) innerDomain)
+
+        getVerts domain = na $ vcat [ "{getVerts} GraphAsSets"
+                                    , "domain:" <+> pretty domain
+                                    ]
+
+        getEdges (DomainGraph "GraphAsSets" (GraphAttr _ nEdges _) innerDomain) =
+            return (DomainSet (repr nEdges) (SetAttr nEdges) $ DomainTuple [innerDomain,innerDomain])
+
+        getEdges domain = na $ vcat [ "{getEdges} GraphAsSets"
+                                    , "domain:" <+> pretty domain
+                                    ]
+
         downD :: TypeOf_DownD m
-        downD (name, DomainGraph "GraphAsSets"
-                    (GraphAttr nVerts nEdges _)
-                    innerDomain) = 
-            let repr s = case s of
-                          SizeAttr_Size{} -> "Explicit"
-                          _               -> "ExplicitVarSizeWithMarker"
-            in  return . Just $
-                  [ ( nameVerts name
-                    , DomainSet (repr nVerts)
-                                (SetAttr nVerts)
-                                innerDomain
-                    )
-                  , ( nameEdges name
-                    , DomainSet (repr nEdges)
-                                (SetAttr nEdges) 
-                                $ DomainTuple [innerDomain,innerDomain]
-                    )
-                  ]
-        downD _ = na "{downD} GraphAsSets"
+        downD (name, inDom) = do
+            vDom <- getVerts inDom
+            eDom <- getEdges inDom
+            return $ Just [ ( nameVerts name , vDom ) 
+                          , ( nameEdges name , eDom )
+                          ]
 
         structuralCons :: TypeOf_Structural m
         structuralCons f downX1 inDom = do
@@ -59,10 +64,23 @@ graphAsSets _ = Representation chck downD structuralCons downC up
 --                  r1   <- isg1 graph
 --                  r2   <- isg2 graph
 --                  return $ r1 ++ r2
+--                innerStructuralCons rel = do
+--                    outDom                 <- outDomain inDom
+--                    innerStructuralConsGen <- f outDom
+--                    innerStructuralConsGen rel
+            let structuralConsVs vs = do
+                  d <- getVerts inDom
+                  innerStructuralConsGen <- f d
+                  innerStructuralConsGen vs
+
+            let structuralConsEs es = do
+                  d <- getEdges inDom
+                  innerStructuralConsGen <- f d
+                  innerStructuralConsGen es
 
             let validEdgesCons vs es = do
                     (iPat, i) <- quantifiedVar
-                    return $ return $ -- list
+                    return $ return $
                         [essence|
                             and([ &i[1] in &vs /\ &i[2] in &vs
                                 | &iPat <- &es ])
@@ -81,17 +99,21 @@ graphAsSets _ = Representation chck downD structuralCons downC up
             return $ \ graph -> do
                 refs <- downX1 graph
                 case refs of
-                    [vs,es] ->
-                        concat <$> sequence
-                            [ --innerStructuralCons vs es
-                              validEdgesCons vs es
-                            ]
+                    [vs,es] -> do
+                      comp <- case inDom of
+                                DomainGraph "GraphAsSets" (GraphAttr _ _ True) _
+                                  -> compCons vs es
+                                _ -> return []
+                      concat <$> sequence 
+                             [ structuralConsVs vs
+                             , structuralConsEs es
+                             , validEdgesCons vs es
+                             , return comp
+                             ]
                             -- , compCons vs es
                             -- , 
                             -- ]
                     _ -> na "{structuralCons} GraphAsSets"
-
-        structuralCons _ _ _ = na "{structuralCons} GraphAsSets"
 
         downC :: TypeOf_DownC m
         downC _ = na "{downC} Function1DPartial"
