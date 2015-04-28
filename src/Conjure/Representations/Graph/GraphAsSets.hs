@@ -96,6 +96,14 @@ graphAsSets _ = Representation chck downD structuralCons downC up
                                 , &jPat <- &vs])
                         |]
 
+            let simpCons es = do
+                    (iPat, i) <- quantifiedVar
+                    return $ return $
+                        [essence|
+                            and([ &i[1] != &i[2]
+                                | &iPat <- &es])
+                        |]
+
             return $ \ graph -> do
                 refs <- downX1 graph
                 case refs of
@@ -108,6 +116,7 @@ graphAsSets _ = Representation chck downD structuralCons downC up
                              [ structuralConsVs vs
                              , structuralConsEs es
                              , validEdgesCons vs es
+                             , simpCons es
                              , return comp
                              ]
                             -- , compCons vs es
