@@ -751,6 +751,7 @@ parseLiteral = msum ( map try
     , AbstractLiteral <$> pSequence
     , AbstractLiteral <$> pRelation
     , AbstractLiteral <$> pPartition
+    , AbstractLiteral <$> pGraph
     ] ) <?> "value"
     where
         pBool = do
@@ -832,6 +833,14 @@ parseLiteral = msum ( map try
             return (AbsLitPartition xs)
             where
                 inner = braces (sepBy parseExpr comma)
+
+        pGraph = do
+            lexeme L_graph
+            xs <- parens (sepBy lFunc comma)
+            return $ AbsLitGraph xs
+            where
+                lFunc = labelSet parseExpr aList
+                aList = braces (sepBy parseExpr comma)
 
 shuntingYardExpr :: Parser [Either Lexeme Expression] -> Parser Expression
 shuntingYardExpr p = do
@@ -1005,6 +1014,13 @@ arrowedPair p = do
     i <- p
     lexeme L_LongArrow
     j <- p
+    return (i,j)
+
+labelSet :: Parser a -> Parser b -> Parser (a,b)
+labelSet p1 p2 = do
+    i <- p1
+    lexeme L_LongArrow
+    j <- p2
     return (i,j)
 
 inCompleteFile :: Parser a -> Parser a

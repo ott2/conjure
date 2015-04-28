@@ -31,6 +31,7 @@ data AbstractLiteral x
     | AbsLitSequence [x]
     | AbsLitRelation [[x]]
     | AbsLitPartition [[x]]
+    | AbsLitGraph [(x, [x])]
     deriving (Eq, Ord, Show, Data, Functor, Traversable, Foldable, Typeable, Generic)
 
 instance Serialize x => Serialize (AbstractLiteral x)
@@ -51,6 +52,10 @@ instance Pretty a => Pretty (AbstractLiteral a) where
     pretty (AbsLitSequence  xs ) = "sequence"  <> prettyList prParens "," xs
     pretty (AbsLitRelation  xss) = "relation"  <> prettyListDoc prParens "," [ pretty (AbsLitTuple xs)         | xs <- xss   ]
     pretty (AbsLitPartition xss) = "partition" <> prettyListDoc prParens "," [ prettyList prBraces "," xs      | xs <- xss   ]
+    pretty (AbsLitGraph     xss) = "graph" <> prettyListDoc prParens "," 
+                                                [pretty a <+> "-->" <+> 
+                                                  (prettyList prBraces "," b)
+                                                | (a,b) <- xss ]
 
 instance (VarSymBreakingDescription x, ExpressionLike x) => VarSymBreakingDescription (AbstractLiteral x) where
     varSymBreakingDescription (AbsLitTuple xs) = JSON.Object $ M.fromList
@@ -139,6 +144,9 @@ instance (TypeOf a, Pretty a) => TypeOf (AbstractLiteral a) where
     typeOf   (AbsLitPartition   [] ) = return (TypePartition TypeAny) 
     typeOf p@(AbsLitPartition   xss) = TypePartition <$> (homoType (pretty p) =<< mapM typeOf (concat xss))
 
+    typeOf   (AbsLitGraph       [] ) = return (TypeGraph TypeAny) 
+    typeOf p@(AbsLitGraph       xss) = TypeGraph <$> (homoType (pretty p) =<< mapM typeOf (map fst xss ++ concat (map snd xss)))
+
 instance (DomainOf a a, ExpressionLike a) => DomainOf (AbstractLiteral a) a where
 
     domainOf (AbsLitTuple        xs) = DomainTuple  <$> mapM domainOf xs
@@ -173,6 +181,8 @@ instance (DomainOf a a, ExpressionLike a) => DomainOf (AbstractLiteral a) a wher
 
     domainOf (AbsLitPartition   xss) = DomainPartition def def <$> (mconcat <$> mapM domainOf (concat xss))
 
+    domainOf (AbsLitGraph       xss) = DomainGraph def def <$> (mconcat <$> mapM domainOf (map fst xss ++ concat (map snd xss)))
+
 normaliseAbsLit :: (Ord c, ExpressionLike c) => (c -> c) -> AbstractLiteral c -> AbstractLiteral c
 normaliseAbsLit norm (AbsLitTuple     xs ) = AbsLitTuple                           $ map norm xs
 normaliseAbsLit norm (AbsLitRecord    xs ) = AbsLitRecord                          $ map (second norm) xs
@@ -184,6 +194,9 @@ normaliseAbsLit norm (AbsLitFunction  xs ) = AbsLitFunction              $ sortN
 normaliseAbsLit norm (AbsLitSequence  xs ) = AbsLitSequence              $           map norm xs
 normaliseAbsLit norm (AbsLitRelation  xss) = AbsLitRelation              $ sortNub $ map (map norm) xss
 normaliseAbsLit norm (AbsLitPartition xss) = AbsLitPartition             $ sortNub $ map (sortNub . map norm) xss
+normaliseAbsLit norm (AbsLitGraph     xss) = let snds' = map (sortNub . map norm . snd) xss
+                                                 fsts' = map (norm . fst) xss
+                                             in  AbsLitGraph $ sortNub $ zip fsts' snds'
 
 emptyCollectionAbsLit :: AbstractLiteral c -> Bool
 emptyCollectionAbsLit AbsLitTuple{} = False
@@ -196,3 +209,4 @@ emptyCollectionAbsLit (AbsLitFunction xs) = null xs
 emptyCollectionAbsLit (AbsLitSequence xs) = null xs
 emptyCollectionAbsLit (AbsLitRelation xs) = null xs
 emptyCollectionAbsLit (AbsLitPartition xs) = null xs
+emptyCollectionAbsLit (AbsLitGraph xs) = null xs
