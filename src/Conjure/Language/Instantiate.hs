@@ -206,6 +206,7 @@ instantiateD (DomainFunction  r attrs innerFr innerTo) = DomainFunction r <$> in
 instantiateD (DomainSequence  r attrs inner) = DomainSequence r <$> instantiateSequenceAttr attrs <*> instantiateD inner
 instantiateD (DomainRelation  r attrs inners) = DomainRelation r <$> instantiateRelationAttr attrs <*> mapM instantiateD inners
 instantiateD (DomainPartition r attrs inner) = DomainPartition r <$> instantiatePartitionAttr attrs <*> instantiateD inner
+instantiateD (DomainGraph     r attrs inner) = DomainGraph r <$> instantiateGraphAttr attrs <*> instantiateD inner
 instantiateD (DomainOp {}) = bug "instantiateD DomainOp"
 instantiateD (DomainReference _ (Just d)) = instantiateD d
 instantiateD (DomainReference name Nothing) = do
@@ -304,6 +305,18 @@ instantiatePartitionAttr (PartitionAttr a b c) =
     PartitionAttr <$> instantiateSizeAttr a
                   <*> instantiateSizeAttr b
                   <*> pure c
+
+
+instantiateGraphAttr
+    :: ( MonadFail m
+       , MonadState [(Name, Expression)] m
+       )
+    => GraphAttr Expression
+    -> m (GraphAttr Constant)
+instantiateGraphAttr (GraphAttr a b c) =
+    GraphAttr <$> instantiateSizeAttr a
+              <*> instantiateSizeAttr b
+              <*> pure c
 
 
 instantiateR

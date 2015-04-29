@@ -242,6 +242,12 @@ addEnumsAndUnnamedsBack unnameds ctxt = helper
                     [ [ helper inner c | c <- line ]
                     | line <- vals ]
 
+            (DomainGraph _ _ inner, ConstantAbstract (AbsLitGraph vals)) ->
+                ConstantAbstract $ AbsLitGraph $ zip fsts snds
+                    where fsts = [ helper inner $ fst c | c <- vals ]
+                          snds = [ [ helper inner c | c <- snd line ]
+                                 | line <- vals ]
+
             _ -> bug ("addEnumsAndUnnamedsBack 3:" <++> vcat [ "domain  :" <+> pretty domain
                                                              , "constant:" <+> pretty constant
                                                              ])

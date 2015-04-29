@@ -57,17 +57,6 @@ graphAsSets _ = Representation chck downD structuralCons downC up
         structuralCons :: TypeOf_Structural m
         structuralCons f downX1 inDom = do
 
---            let innerStructuralCons vs es = do
---                  [od1,od2] <- downD inDom
---                  isg1 <- f od1
---                  isg2 <- f od2
---                  r1   <- isg1 graph
---                  r2   <- isg2 graph
---                  return $ r1 ++ r2
---                innerStructuralCons rel = do
---                    outDom                 <- outDomain inDom
---                    innerStructuralConsGen <- f outDom
---                    innerStructuralConsGen rel
             let structuralConsVs vs = do
                   d <- getVerts inDom
                   innerStructuralConsGen <- f d
@@ -125,41 +114,39 @@ graphAsSets _ = Representation chck downD structuralCons downC up
                     _ -> na "{structuralCons} GraphAsSets"
 
         downC :: TypeOf_DownC m
-        downC _ = na "{downC} Function1DPartial"
+        downC _ = na "{downC} GraphAsSets"
 
         up :: TypeOf_Up m
-        --up ctxt (name, domain@(DomainGraph "Function1DPartial"
-        --                        (FunctionAttr _ PartialityAttr_Partial _)
-        --                        innerDomainFr _)) =
-        --    case (lookup (nameFlags name) ctxt, lookup (nameValues name) ctxt) of
-        --        ( Just (ConstantAbstract (AbsLitMatrix _ flagMatrix)) ,
-        --          Just (ConstantAbstract (AbsLitMatrix _ valuesMatrix)) ) -> do
-        --            froms          <- domainValues innerDomainFr
-        --            functionValues <- forM (zip3 flagMatrix froms valuesMatrix) $ \ (flag, from, to) ->
-        --                case flag of
-        --                    ConstantBool b -> return $ if b then Just (from,to) else Nothing
-        --                    _ -> fail $ vcat [ "Expected a boolean, but got:" <+> pretty flag
-        --                                     , "When working on:" <+> pretty name
-        --                                     , "With domain:" <+> pretty domain
-        --                                     ]
-        --            return ( name, ConstantAbstract $ AbsLitFunction $ catMaybes functionValues )
-        --        (Nothing, _) -> fail $ vcat $
-        --            [ "No value for:" <+> pretty (nameFlags name)
-        --            , "When working on:" <+> pretty name
-        --            , "With domain:" <+> pretty domain
-        --            ] ++
-        --            ("Bindings in context:" : prettyContext ctxt)
-        --        (_, Nothing) -> fail $ vcat $
-        --            [ "No value for:" <+> pretty (nameValues name)
-        --            , "When working on:" <+> pretty name
-        --            , "With domain:" <+> pretty domain
-        --            ] ++
-        --            ("Bindings in context:" : prettyContext ctxt)
-        --        _ -> fail $ vcat $
-        --            [ "Expected matrix literals for:" <+> pretty (nameFlags name)
-        --                                    <+> "and" <+> pretty (nameValues name)
-        --            , "When working on:" <+> pretty name
-        --            , "With domain:" <+> pretty domain
-        --            ] ++
-        --            ("Bindings in context:" : prettyContext ctxt)
-        up _ _ = na "{up} Function1DPartial"
+        up ctxt (name, domain@(DomainGraph "GraphAsSets"
+                                (GraphAttr _ _ _)
+                                innerDomain)) = 
+            case (lookup (nameVerts name) ctxt, lookup (nameEdges name) ctxt) of
+                ( Just (ConstantAbstract (AbsLitSet vSet)) ,
+                  Just (ConstantAbstract (AbsLitSet eSet)) ) -> do
+                    let isAdjacent v (ConstantAbstract (AbsLitTuple [fr,to])) 
+                          | v == fr   = Just to
+                          | otherwise = Nothing
+                        isAdjacent _ _ = Nothing
+                        mkAdjList v = mapMaybe (isAdjacent v) eSet
+                        xs = zip vSet $ map mkAdjList vSet
+                    return ( name, ConstantAbstract $ AbsLitGraph xs )
+                (Nothing, _) -> fail $ vcat $
+                    [ "No value for:" <+> pretty (nameVerts name)
+                    , "When working on:" <+> pretty name
+                    , "With domain:" <+> pretty domain
+                    ] ++
+                    ("Bindings in context:" : prettyContext ctxt)
+                (_, Nothing) -> fail $ vcat $
+                    [ "No value for:" <+> pretty (nameEdges name)
+                    , "When working on:" <+> pretty name
+                    , "With domain:" <+> pretty domain
+                    ] ++
+                    ("Bindings in context:" : prettyContext ctxt)
+                _ -> fail $ vcat $
+                    [ "Expected set literals for:" <+> pretty (nameVerts name)
+                                         <+> "and" <+> pretty (nameEdges name)
+                    , "When working on:" <+> pretty name
+                    , "With domain:" <+> pretty domain
+                    ] ++
+                    ("Bindings in context:" : prettyContext ctxt)
+        up _ _ = na "{up} GraphAsSets"
