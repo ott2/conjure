@@ -253,6 +253,9 @@ data Lexeme
     | L_pred
     | L_succ
 
+    | L_verts
+    | L_edges
+
     deriving (Eq, Ord, Show, Generic)
 
 instance Hashable Lexeme
@@ -452,6 +455,8 @@ lexemes = sortBy (flip (comparing (T.length . fst))) $ map swap
     , ( L_pred, "pred" )
     , ( L_succ, "succ" )
 
+    , ( L_verts, "verts" )
+    , ( L_edges, "edges" )
 
     ]
 

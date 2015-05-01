@@ -226,6 +226,9 @@ functionals =
     , L_pred
     , L_succ
 
+    , L_verts
+    , L_edges
+
     ]
 
 

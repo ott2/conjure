@@ -115,4 +115,6 @@ mkOp op xs =
                                                                            (atNote "active 2" xs 1 |> nameOut |> fromMaybe (bug "active 2"))
             L_pred         -> inject $ MkOpPred         $ OpPred         (headNote "pred takes a single argument."    xs)
             L_succ         -> inject $ MkOpSucc         $ OpSucc         (headNote "succ takes a single argument."    xs)
+            L_verts        -> inject $ MkOpVerts        $ OpVerts        (headNote "verts takes a single argument."    xs)
+            L_edges        -> inject $ MkOpEdges        $ OpEdges        (headNote "edges takes a single argument."    xs)
             _ -> bug ("Unknown lexeme for operator:" <+> pretty (show l))
