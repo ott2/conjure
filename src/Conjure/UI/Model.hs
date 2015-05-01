@@ -75,6 +75,8 @@ import qualified Conjure.Rules.Horizontal.Partition as Horizontal.Partition
 import qualified Conjure.Rules.Vertical.Partition.PartitionAsSet as Vertical.Partition.PartitionAsSet
 import qualified Conjure.Rules.Vertical.Partition.Occurrence as Vertical.Partition.Occurrence
 
+import qualified Conjure.Rules.Vertical.Graph.GraphAsSets as Vertical.Graph.GraphAsSets
+
 import qualified Conjure.Rules.BubbleUp as BubbleUp
 import qualified Conjure.Rules.DontCare as DontCare
 import qualified Conjure.Rules.TildeOrdering as TildeOrdering
@@ -818,6 +820,8 @@ verticalRules =
 
     , Vertical.Partition.Occurrence.rule_Comprehension
 
+    , Vertical.Graph.GraphAsSets.rule_Comprehension_Verts
+    , Vertical.Graph.GraphAsSets.rule_Comprehension_Edges
     ]
 
 horizontalRules :: [Rule]

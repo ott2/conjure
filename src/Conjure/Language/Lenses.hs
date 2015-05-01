@@ -1345,6 +1345,43 @@ opFactorial _ =
                 _ -> na ("Lenses.opFactorial:" <++> pretty p)
     )
 
+opVerts
+    :: ( Op x :< x
+       , Pretty x
+       , MonadFail m
+       )
+    => Proxy (m :: * -> *)
+    -> ( x -> x
+       , x -> m x
+       )
+opVerts _ =
+    ( inject . MkOpVerts . OpVerts
+    , \ g -> do
+            op <- project g
+            case op of
+                MkOpVerts (OpVerts x) -> return x
+                _ -> na ("Lenses.opVerts:" <++> pretty g)
+    )
+
+
+opEdges
+    :: ( Op x :< x
+       , Pretty x
+       , MonadFail m
+       )
+    => Proxy (m :: * -> *)
+    -> ( x -> x
+       , x -> m x
+       )
+opEdges _ =
+    ( inject . MkOpEdges . OpEdges
+    , \ g -> do
+            op <- project g
+            case op of
+                MkOpEdges (OpEdges x) -> return x
+                _ -> na ("Lenses.opEdges:" <++> pretty g)
+    )
+
 
 fixRelationProj :: Data a => a -> a
 fixRelationProj = transformBi f
