@@ -256,6 +256,8 @@ data Lexeme
     | L_verts
     | L_edges
 
+    | L_subgraph
+
     deriving (Eq, Ord, Show, Generic)
 
 instance Hashable Lexeme
@@ -457,6 +459,8 @@ lexemes = sortBy (flip (comparing (T.length . fst))) $ map swap
 
     , ( L_verts, "verts" )
     , ( L_edges, "edges" )
+
+    , ( L_subgraph, "subgraph" )
 
     ]
 

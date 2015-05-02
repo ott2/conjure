@@ -929,6 +929,24 @@ opMin _ =
                 _ -> na ("Lenses.opMin:" <++> pretty p)
     )
 
+opSubgraph
+    :: ( Op x :< x
+       , Pretty x
+       , MonadFail m
+       )
+    => Proxy (m :: * -> *)
+    -> ( x -> x -> x
+       , x -> m (x,x)
+       )
+opSubgraph _ =
+    ( \ x y -> inject (MkOpSubgraph (OpSubgraph x y))
+    , \ p -> do
+            op <- project p
+            case op of
+                MkOpSubgraph (OpSubgraph x y) -> return (x,y)
+                _ -> na ("Lenses.opSubgraph:" <++> pretty p)
+    )
+
 
 opImply
     :: ( Op x :< x

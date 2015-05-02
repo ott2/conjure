@@ -75,6 +75,7 @@ import qualified Conjure.Rules.Horizontal.Partition as Horizontal.Partition
 import qualified Conjure.Rules.Vertical.Partition.PartitionAsSet as Vertical.Partition.PartitionAsSet
 import qualified Conjure.Rules.Vertical.Partition.Occurrence as Vertical.Partition.Occurrence
 
+import qualified Conjure.Rules.Horizontal.Graph as Horizontal.Graph
 import qualified Conjure.Rules.Vertical.Graph.GraphAsSets as Vertical.Graph.GraphAsSets
 
 import qualified Conjure.Rules.BubbleUp as BubbleUp
@@ -913,6 +914,7 @@ horizontalRules =
     , Horizontal.Sequence.rule_Substring
     , Horizontal.Sequence.rule_SubstringCyclic
     , Horizontal.Sequence.rule_Subsequence
+    , Horizontal.Graph.rule_Subgraph
 
     , Horizontal.Relation.rule_Comprehension_Literal
     , Horizontal.Relation.rule_Comprehension_Projection

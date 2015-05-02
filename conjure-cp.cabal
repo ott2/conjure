@@ -96,6 +96,7 @@ Library
                      , Conjure.Language.Expression.Op.SubsetEq
                      , Conjure.Language.Expression.Op.Substring
                      , Conjure.Language.Expression.Op.SubstringCyclic
+                     , Conjure.Language.Expression.Op.Subgraph
                      , Conjure.Language.Expression.Op.Succ
                      , Conjure.Language.Expression.Op.Sum
                      , Conjure.Language.Expression.Op.Supset
@@ -199,6 +200,7 @@ Library
                      , Conjure.Rules.Vertical.Partition.PartitionAsSet
                      , Conjure.Rules.Vertical.Partition.Occurrence
 
+                     , Conjure.Rules.Horizontal.Graph
                      , Conjure.Rules.Vertical.Graph.GraphAsSets
 
                      , Conjure.Rules.BubbleUp

@@ -48,6 +48,7 @@ mkBinOp op a b =
                     L_substringCyclic 
                                   -> \ x y -> inject $ MkOpSubstringCyclic   
                                                                        $ OpSubstringCyclic x y
+                    L_subgraph    -> \ x y -> inject $ MkOpSubgraph    $ OpSubgraph    x y  
                     L_intersect   -> \ x y -> inject $ MkOpIntersect   $ OpIntersect   x y
                     L_union       -> \ x y -> inject $ MkOpUnion       $ OpUnion       x y
                     L_LexLt       -> \ x y -> inject $ MkOpLexLt       $ OpLexLt       x y

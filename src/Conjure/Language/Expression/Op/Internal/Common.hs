@@ -165,6 +165,7 @@ operators =
     , ( L_substring   , FNone  ,  400 )
     , ( L_substringCyclic, FNone, 400 )
     , ( L_in          , FNone  ,  550 )
+    , ( L_subgraph    , FNone  ,  400 )
     -- , ( L_Colon     , FNone  ,   10 )
     , ( L_HasRepr     , FNone  ,   10 )
     , ( L_HasType     , FNone  ,   10 )
