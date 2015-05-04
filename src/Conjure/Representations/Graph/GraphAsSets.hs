@@ -114,7 +114,35 @@ graphAsSets _ = Representation chck downD structuralCons downC up
                     _ -> na "{structuralCons} GraphAsSets"
 
         downC :: TypeOf_DownC m
+        downC ( name
+              , DomainGraph "GraphAsSets"
+                    (GraphAttr vs es _)
+                    inner
+              , ConstantAbstract (AbsLitGraph vals)
+              ) = do
+            let vertsOut = map fst vals
+                mkE (v,us) = map (\u -> ConstantAbstract $ AbsLitTuple [v,u]) us
+                edgesOut = concat $ map mkE vals
+            return $ Just
+                [ ( nameVerts name
+                  , DomainSet
+                      (repr vs)
+                      (SetAttr vs)
+                      inner
+                  , ConstantAbstract $ AbsLitSet
+                      vertsOut
+                  )
+                , ( nameEdges name
+                  , DomainSet
+                      (repr es)
+                      (SetAttr es)
+                      $ DomainTuple [inner,inner]
+                  , ConstantAbstract $ AbsLitSet
+                      edgesOut
+                  )
+                ]
         downC _ = na "{downC} GraphAsSets"
+
 
         up :: TypeOf_Up m
         up ctxt (name, domain@(DomainGraph "GraphAsSets"
