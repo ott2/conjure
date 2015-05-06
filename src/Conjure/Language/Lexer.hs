@@ -251,6 +251,7 @@ data Lexeme
     | L_substringCyclic
     | L_substrings
     | L_substringsCyclic
+    | L_getSubstring
 
     | L_pred
     | L_succ
@@ -455,8 +456,9 @@ lexemes = sortBy (flip (comparing (T.length . fst))) $ map swap
     , ( L_subsequence     , "subsequence"     )
     , ( L_substring       , "substring"       )
     , ( L_substringCyclic , "substringCyclic" )
-    , ( L_substrings      , "substrings"       )
-    , ( L_substringsCyclic, "substringsCyclic" )
+    , ( L_substrings      , "substrings"      )
+    , ( L_substringsCyclic, "substringsCyclic")
+    , ( L_getSubstring    , "getSubstring"    )
 
     , ( L_pred, "pred" )
     , ( L_succ, "succ" )

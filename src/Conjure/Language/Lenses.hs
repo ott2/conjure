@@ -230,6 +230,23 @@ opRestrict _ =
         extract (Op (MkOpRestrict (OpRestrict x (Domain d)))) = return (x, d)
         extract p = na ("Lenses.opRestrict:" <++> pretty p)
 
+opGetSubstring
+    :: ( Op x :< x
+       , Pretty x
+       , MonadFail m
+       )
+    => Proxy (m :: * -> *)
+    -> ( x -> x -> x -> x
+       , x -> m (x , x , x)
+       )
+opGetSubstring _ =
+    ( \ x y z -> inject $ MkOpGetSubstring $ OpGetSubstring x y z
+    , \ p -> case project p of
+               Just (MkOpGetSubstring (OpGetSubstring a b c)) -> return (a,b,c)
+               _                                              -> na ("Lenses.opGetSubstring" <++> pretty p)
+    )
+
+
 --opSubstrings
 --    :: MonadFail m
 --    => Proxy (m :: * -> *)

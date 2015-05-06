@@ -93,6 +93,7 @@ mkOp op xs =
                            -> inject $ MkOpSubstringsCyclic   
                                                         $ OpSubstringsCyclic   
                                                                          (atNote "substringsCyclic 1" xs 0) (atNote "substringsCyclic 2" xs 1)
+            L_getSubstring -> inject $ MkOpGetSubstring $ OpGetSubstring (atNote "getSubstring 1" xs 0) (atNote "getSubstring 2" xs 1) (atNote "getSubstring 3" xs 2)
             L_allDiff      -> inject $ MkOpAllDiff      $ OpAllDiff      (headNote "allDiff takes a single argument."  xs)
             L_dontCare     -> inject $ MkOpDontCare     $ OpDontCare     (headNote "dontCare takes a single argument." xs)
             L_flatten      -> inject $ MkOpFlatten      $ OpFlatten      (headNote "flatten takes a single argument."  xs)

@@ -216,6 +216,7 @@ functionals =
     , L_inverse
     , L_substrings
     , L_substringsCyclic
+    , L_getSubstring
 
     , L_true
 

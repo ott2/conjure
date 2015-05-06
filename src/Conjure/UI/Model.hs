@@ -914,6 +914,7 @@ horizontalRules =
     , Horizontal.Sequence.rule_Substring
     , Horizontal.Sequence.rule_SubstringCyclic
     , Horizontal.Sequence.rule_Subsequence
+    , Horizontal.Sequence.rule_Comprehension_GetSubstring
     , Horizontal.Graph.rule_Subgraph
 
     , Horizontal.Relation.rule_Comprehension_Literal

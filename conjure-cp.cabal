@@ -98,6 +98,7 @@ Library
                      , Conjure.Language.Expression.Op.Substrings
                      , Conjure.Language.Expression.Op.SubstringCyclic
                      , Conjure.Language.Expression.Op.SubstringsCyclic
+                     , Conjure.Language.Expression.Op.GetSubstring
                      , Conjure.Language.Expression.Op.Subgraph
                      , Conjure.Language.Expression.Op.Succ
                      , Conjure.Language.Expression.Op.Sum

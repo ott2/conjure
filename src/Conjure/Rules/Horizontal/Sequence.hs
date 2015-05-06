@@ -580,44 +580,68 @@ rule_Subsequence = "subsequence" `namedRule` theRule where
             )
     theRule _ = na "rule_Subsequence"
 
-rule_Comprehension_Substrings :: Rule
-rule_Comprehension_Substrings = "sequence-substrings" `namedRule` theRule where
+rule_Comprehension_GetSubstring :: Rule
+rule_Comprehension_GetSubstring = "sequence-getSubstring" `namedRule` theRule where
     theRule (Comprehension body gensOrConds) = do
-        (gocBefore, (pat, expr), gocAfter) <- matchFirst gensOrConds $ \ goc -> case goc of
+        (gofBefore, (pat, expr), gofAfter) <- matchFirst gensOrConds $ \ gof -> case gof of
             Generator (GenInExpr pat@Single{} expr) -> return (pat, expr)
-            _ -> na "rule_Comprehension_Substrings"
-        [seq,len] <- match opSubstrings expr
-        DomainSequence _ _ inner <- domainOf seq
+            _ -> na "rule_Comprehension_getSubstring"
+        (seq, start, len) <- match opGetSubstring expr
+        TypeSequence{} <- typeOf seq
         let upd val old = lambdaToFunction pat old val
         return
-            ( "Mapping over substrings(s)"
+            ( "Mapping over the substring of a sequence"
             , do
-                (auxName, aux) <- auxiliaryVar
                 (jPat, j) <- quantifiedVar
-                (kPat, k) <- quantifiedVar
-                (lPat, l) <- quantifiedVar
-                let k2 = [essence| &k[2] |]
-                let l2 = [essence| &l[2] |]
-                return $ WithLocals
-                    (Comprehension
-                        (upd j body)
-                        $  gocBefore
-                        ++ [ Generator (GenInExpr jPat aux) ]
-                        ++ transformBi (upd j) gocAfter)
-                    (Left [ Declaration (FindOrGiven LocalFind auxName (DomainSet def def (forgetRepr domTo)))
-                          , SuchThat
-                              [ make opAnd $ Comprehension
-                                  [essence| &k2 in &aux |]
-                                  [ Generator (GenInExpr kPat func) ]
-                              , make opAnd $
-                                  Comprehension
-                                      (make opOr $ Comprehension
-                                          [essence| &l2 = &k |]
-                                          [ Generator (GenInExpr lPat func) ]
-                                      )
-                                      [ Generator (GenInExpr kPat aux) ]
-                              ]
-                          ])
+                let val = [essence| (&j[1]-&start+1,&j[2]) |]
+                return $ Comprehension
+                        (upd val body)
+                        $  gofBefore
+                        ++ [ Generator (GenInExpr jPat seq)
+                           , Condition [essence| &j[1] <= &start + &len |]
+                           , Condition [essence| &j[1] >= &start |]
+                           ]
+                        ++ transformBi (upd val) gofAfter
             )
-    theRule _ = na "rule_Comprehension_Substrings"
-
+    theRule _ = na "rule_Comprehension_PreImage"
+--rule_Comprehension_Substrings :: Rule
+--rule_Comprehension_Substrings = "sequence-substrings" `namedRule` theRule where
+--    theRule (Comprehension body gensOrConds) = do
+--        (gocBefore, (pat, expr), gocAfter) <- matchFirst gensOrConds $ \ goc -> case goc of
+--            Generator (GenInExpr pat@Single{} expr) -> return (pat, expr)
+--            _ -> na "rule_Comprehension_Substrings"
+--        [seq,len] <- match opSubstrings expr
+--        DomainSequence _ _ inner <- domainOf seq
+--        let upd val old = lambdaToFunction pat old val
+--        return
+--            ( "Mapping over substrings(s)"
+--            , do
+--                (auxName, aux) <- auxiliaryVar
+--                (jPat, j) <- quantifiedVar
+--                (kPat, k) <- quantifiedVar
+--                (lPat, l) <- quantifiedVar
+--                let k2 = [essence| &k[2] |]
+--                let l2 = [essence| &l[2] |]
+--                return $ WithLocals
+--                    (Comprehension
+--                        (upd j body)
+--                        $  gocBefore
+--                        ++ [ Generator (GenInExpr jPat aux) ]
+--                        ++ transformBi (upd j) gocAfter)
+--                    (Left [ Declaration (FindOrGiven LocalFind auxName (DomainSet def def (forgetRepr domTo)))
+--                          , SuchThat
+--                              [ make opAnd $ Comprehension
+--                                  [essence| &k2 in &aux |]
+--                                  [ Generator (GenInExpr kPat func) ]
+--                              , make opAnd $
+--                                  Comprehension
+--                                      (make opOr $ Comprehension
+--                                          [essence| &l2 = &k |]
+--                                          [ Generator (GenInExpr lPat func) ]
+--                                      )
+--                                      [ Generator (GenInExpr kPat aux) ]
+--                              ]
+--                          ])
+--            )
+--    theRule _ = na "rule_Comprehension_Substrings"
+--
