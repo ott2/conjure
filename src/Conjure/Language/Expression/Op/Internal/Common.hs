@@ -214,6 +214,8 @@ functionals =
     , L_normIndices
     , L_indices
     , L_inverse
+    , L_substrings
+    , L_substringsCyclic
 
     , L_true
 

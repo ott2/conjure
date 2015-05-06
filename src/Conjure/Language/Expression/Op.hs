@@ -88,6 +88,11 @@ mkOp op xs =
             L_defined      -> inject $ MkOpDefined      $ OpDefined      (headNote "defined takes a single argument."  xs)
             L_range        -> inject $ MkOpRange        $ OpRange        (headNote "range takes a single argument."    xs)
             L_restrict     -> inject $ MkOpRestrict     $ OpRestrict     (atNote "restrict 1" xs 0) (atNote "restrict 2" xs 1)
+            L_substrings   -> inject $ MkOpSubstrings   $ OpSubstrings   (atNote "substrings 1" xs 0) (atNote "substrings 2" xs 1)
+            L_substringsCyclic   
+                           -> inject $ MkOpSubstringsCyclic   
+                                                        $ OpSubstringsCyclic   
+                                                                         (atNote "substringsCyclic 1" xs 0) (atNote "substringsCyclic 2" xs 1)
             L_allDiff      -> inject $ MkOpAllDiff      $ OpAllDiff      (headNote "allDiff takes a single argument."  xs)
             L_dontCare     -> inject $ MkOpDontCare     $ OpDontCare     (headNote "dontCare takes a single argument." xs)
             L_flatten      -> inject $ MkOpFlatten      $ OpFlatten      (headNote "flatten takes a single argument."  xs)

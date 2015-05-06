@@ -230,6 +230,18 @@ opRestrict _ =
         extract (Op (MkOpRestrict (OpRestrict x (Domain d)))) = return (x, d)
         extract p = na ("Lenses.opRestrict:" <++> pretty p)
 
+--opSubstrings
+--    :: MonadFail m
+--    => Proxy (m :: * -> *)
+--    -> ( Expression -> Domain () Expression -> Expression
+--       , Expression -> m (Expression, Expression)
+--       )
+--opSubstrings _ =
+--    ( \ s l -> inject $ MkOpSubstrings $ OpSubstrings s l
+--    )
+--    where
+--        extract (Op (MkOpRestrict (OpRestrict x (Domain d)))) = return (x, d)
+--        extract p = na ("Lenses.opRestrict:" <++> pretty p)
 
 opToInt
     :: ( Op x :< x
