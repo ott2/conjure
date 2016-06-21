@@ -145,6 +145,9 @@ resolveX
     => Expression
     -> m Expression
 
+
+resolveX x | trace (show $ "resolveX" <+> pretty x) False = bug""
+
 resolveX (Reference nm Nothing) = do
     ctxt <- gets id
     mval <- gets (lookup nm)

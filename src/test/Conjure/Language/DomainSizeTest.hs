@@ -5,6 +5,7 @@ import Conjure.Prelude
 import Conjure.Language.Constant
 import Conjure.Language.Domain
 import Conjure.Language.DomainSizeOf ( domainSizeOf )
+import Conjure.Language.NameGen
 
 -- tasty
 import Test.Tasty ( TestTree, testGroup )
@@ -12,7 +13,7 @@ import Test.Tasty.HUnit ( testCase, (@?=) )
 
 
 domainSizeConstant :: MonadFail m => Domain () Constant -> m Integer
-domainSizeConstant = domainSizeOf
+domainSizeConstant = runNameGen . domainSizeOf
 
 tests :: TestTree
 tests = testGroup "domainSize"

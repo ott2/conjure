@@ -166,7 +166,7 @@ toCompletion config m = do
 
         loopy :: ModelWIP -> Producer LogOrModel m ()
         loopy modelWIP = do
-            logDebug $ "[loopy]" <+> pretty (modelWIPOut modelWIP)     -- TODO: pretty ModelWIP directly
+            logDebug $ "[loopy]" <+> pretty ((modelWIPOut modelWIP) )     -- TODO: pretty ModelWIP directly
             qs <- remainingWIP config modelWIP
             if null qs
                 then do
@@ -826,7 +826,9 @@ removeExtraSlices model = do
 
 prologue :: (MonadFail m, MonadLog m, NameGen m, EnumerateDomain m) => Model -> m Model
 prologue model = do
+    -- namegenst <- exportNameGenState
     void $ typeCheckModel_StandAlone model
+    -- importNameGenState namegenst
     return model                      >>= logDebugId "[input]"
     >>= attributeAsConstraints        >>= logDebugId "[attributeAsConstraints]"
     >>= inlineLettingDomainsForDecls  >>= logDebugId "[inlineLettingDomainsForDecls]"
@@ -870,7 +872,7 @@ applicableRules
     -> [Rule]
     -> ModelZipper
     -> n [(Doc, RuleResult m)]
-applicableRules Config{..} rulesAtLevel x = do
+applicableRules Config{..} rulesAtLevel x = trace (show $ "applicableRules" <+> pretty (hole x)) $ do
     let logAttempt = if logRuleAttempts  then logInfo else const (return ())
     let logFail    = if logRuleFails     then logInfo else const (return ())
     let logSuccess = if logRuleSuccesses then logInfo else const (return ())
@@ -1307,7 +1309,7 @@ rule_ChooseRepr config = Rule "choose-repr" (const theRule) where
 
             mkStructurals :: (MonadLog m, MonadFail m, NameGen m, EnumerateDomain m)
                           => m [Expression]
-            mkStructurals = do
+            mkStructurals = trace "mkStructurals" $ do
                 let ref = Reference name (Just (DeclHasRepr forg name domain))
                 logDebugVerbose $ "Generating structural constraints for:" <+> vcat [pretty ref, pretty domain]
                 structurals <- getStructurals downX1 domain >>= \ gen -> gen ref
@@ -1319,6 +1321,7 @@ rule_ChooseRepr config = Rule "choose-repr" (const theRule) where
             addStructurals :: (MonadLog m, MonadFail m, NameGen m, EnumerateDomain m)
                            => Model -> m Model
             addStructurals
+                | trace "addStructurals" False = bug""
                 | forg == Given = return
                 | usedBefore = return
                 | otherwise = \ m -> do
@@ -1327,7 +1330,7 @@ rule_ChooseRepr config = Rule "choose-repr" (const theRule) where
                         then m
                         else m { mStatements = mStatements m ++ [SuchThat structurals] }
 
-            channels =
+            channels = trace "channels" $
                 [ make opEq this that
                 | (n, d) <- representations
                 , n == name
@@ -1336,6 +1339,7 @@ rule_ChooseRepr config = Rule "choose-repr" (const theRule) where
                 ]
 
             addChannels
+                | trace "addChannels" False = bug""
                 | forg == Given = return
                 | usedBefore = return
                 | null channels = return
@@ -1343,6 +1347,7 @@ rule_ChooseRepr config = Rule "choose-repr" (const theRule) where
                     m { mStatements = mStatements m ++ [SuchThat channels] }
 
             recordThis
+                | trace "recordThis" False = bug""
                 | usedBefore = return
                 | otherwise = \ m ->
                 let
@@ -1357,6 +1362,7 @@ rule_ChooseRepr config = Rule "choose-repr" (const theRule) where
                 in  return m { mInfo = newInfo }
 
             fixReprForAllOthers
+                | trace "fixReprForAllOthers" False = bug""
                 | useChannelling = return           -- no-op, if channelling=yes
                 | otherwise = \ m ->
                 let
@@ -1368,6 +1374,7 @@ rule_ChooseRepr config = Rule "choose-repr" (const theRule) where
                     return m { mStatements = transformBi f (mStatements m) }
 
             fixReprForSameRegion
+                | trace "fixReprForSameRegion" False = bug""
                 | region == NoRegion = return       -- no-op, if we aren't in a particular region
                 | otherwise = \ m ->
                 let

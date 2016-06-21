@@ -1,4 +1,5 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# LANGUAGE QuasiQuotes #-}
 
 module Conjure.Language.Expression.DomainSizeOf ( DomainSizeOf(..) ) where
 
@@ -10,6 +11,7 @@ import Conjure.Language.AdHoc
 import Conjure.Language.Domain
 import Conjure.Language.Expression.Op
 import Conjure.Language.Lenses
+import Conjure.Language.TH
 
 import Conjure.Language.DomainSizeOf
 import Conjure.Language.Pretty
@@ -17,6 +19,14 @@ import Conjure.Language.Pretty
 
 instance DomainSizeOf Expression Expression where
     domainSizeOf DomainBool = return 2
+    -- domainSizeOf (DomainIntE (Comprehension _ gocs)) = return (make opSum (Comprehension 1 gocs))
+    -- domainSizeOf (DomainIntE (Reference _ (Just (Alias x)))) = domainSizeOf (DomainIntE x :: Domain () Expression)
+    domainSizeOf (DomainIntE x) = do
+        (iPat, _) <- quantifiedVar
+        let val = [essence| sum([1 | &iPat <- &x ]) |]
+        newLetting <- nextName "letTTTT"
+        let newLettingExpr = Reference newLetting (Just (Alias val))
+        return $ WithLocals newLettingExpr (AuxiliaryVars [Declaration (Letting newLetting val)])
     domainSizeOf (DomainInt [] ) = fail "domainSizeOf infinite integer domain"
     domainSizeOf (DomainInt [r]) = domainSizeOfRange r
     domainSizeOf (DomainInt rs ) = make opSum . fromList <$> mapM domainSizeOfRange rs

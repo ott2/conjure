@@ -770,7 +770,7 @@ instance (Pretty r, Pretty a) => Pretty (Domain r a) where
 
     pretty DomainBool = "bool"
 
-    pretty (DomainIntE x) = "int" <> prParens (pretty x)
+    pretty (DomainIntE x) = "int" <> prParens (prParens (pretty x))
 
     pretty (DomainInt []) = "int"
     pretty (DomainInt ranges) = "int" <> prettyList prParens "," ranges

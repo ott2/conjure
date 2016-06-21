@@ -9,11 +9,13 @@ import Conjure.Bug
 import Conjure.Language.Name
 import Conjure.Language.Domain
 import Conjure.Language.Pretty
+import Conjure.Language.NameGen
 
 
 class DomainSizeOf x res where
     domainSizeOf ::
         ( MonadFail m
+        , NameGen m
         , Pretty r
         , Default r
         ) => Domain r x -> m res

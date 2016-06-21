@@ -20,8 +20,9 @@ parameterGenerator = runNameGen . resolveNames >=> core
     where
         core m = do
             (outStatements, errs) <- runWriterT $ forM (mStatements m) $ \ st -> case st of
-                Declaration (FindOrGiven Given nm dom) ->
-                    case domainSizeOf dom of
+                Declaration (FindOrGiven Given nm dom) -> do
+                    res <- runMaybeT $ runNameGen $ domainSizeOf dom
+                    case res of
                         Nothing -> tell [(nm, dom)] >> return []
                         Just (_ :: Expression)
                                 -> return [Declaration (FindOrGiven Find nm dom)]

@@ -6,23 +6,25 @@ import Conjure.Prelude
 import Conjure.UserError
 import Conjure.Language
 import Conjure.Language.CategoryOf
+import Conjure.Language.NameResolution ( resolveNamesX )
 
 
-sanityChecks :: (MonadFail m, MonadUserError m) => Model -> m Model
+sanityChecks :: (MonadFail m, MonadUserError m, NameGen m) => Model -> m Model
 sanityChecks model = do
     let
         recordErr :: MonadWriter [Doc] m => [Doc] -> m ()
         recordErr = tell . return . vcat
 
-        check :: (MonadFail m, MonadWriter [Doc] m) => Model -> m Model
+        check :: (MonadFail m, MonadUserError m, MonadWriter [Doc] m, NameGen m) => Model -> m Model
         check m = do
             forM_ (mStatements m) $ \ st -> case st of
                 Declaration (FindOrGiven Given _ _) -> return () -- skip
                 Declaration FindOrGiven{}           -> mapM_ (checkDomain (Just st)) (universeBi (forgetRefs st))
                 _                                   -> mapM_ (checkDomain Nothing  ) (universeBi (forgetRefs st))
             mapM_ checkFactorial (universeBi $ mStatements m)
-            statements2 <- transformBiM checkLit (mStatements m)
-            return m { mStatements = statements2 }
+            statements2 <- mapM checkDomainIntE (mStatements m)
+            statements3 <- transformBiM checkLit (concat statements2)
+            return m { mStatements = statements3 }
 
         -- check for mset attributes
         -- check for binary relation attrobutes
@@ -46,7 +48,7 @@ sanityChecks model = do
             DomainRelation _ (RelationAttr _ binRelAttr) [a,b]
                 | binRelAttr /= def && a /= b
                 -> recordErr
-                        [ "Binary relation attributes can only be used for binary relation between identical domains."
+                        [ "Binary relation attributes can only be used for binary relations between identical domains."
                         , "Either remove these attributes:" <+> pretty binRelAttr
                         , "Or make sure that the relation is between identical domains."
                         , "Context:" <++> maybe (pretty domain) pretty mstmt
@@ -60,6 +62,40 @@ sanityChecks model = do
                         , "Context:" <++> maybe (pretty domain) pretty mstmt
                         ]
             _ -> return ()
+
+        checkDomainIntE
+            :: (MonadFail m, MonadUserError m, NameGen m)
+            => Statement
+            -> m [Statement]
+        checkDomainIntE st0 = do
+            let
+
+                -- avoid going inside references
+                goX :: (MonadFail m, MonadUserError m, NameGen m, MonadWriter [Statement] m)
+                    => Expression
+                    -> m Expression
+                -- goX x | trace (show $ "goX" <+> pretty (show x)) False = bug""
+                goX x@Reference{} = return x
+                goX (Domain d) = Domain <$> goD d
+                goX x = descendM goX x
+
+                goD :: (MonadFail m, MonadUserError m, NameGen m, MonadWriter [Statement] m)
+                    => Domain () Expression
+                    -> m (Domain () Expression)
+                -- goD x | trace (show $ "goD" <+> pretty x) False = bug""
+                goD (DomainIntE v) = do
+                    (iPat, i) <- quantifiedVar
+                    v' <- resolveNamesX [essence| [ &i | &iPat <- &v ] |]
+                    newLetting <- nextName "let"
+                    tell [Declaration (Letting newLetting v')]                              -- new declaration
+                    return (DomainIntE (Reference newLetting (Just (Alias v'))))            -- the replacement
+                goD d = descendM goD d
+
+            (st, new) <- runWriterT (case st0 of
+                                        Declaration{} -> descendBiM goD st0
+                                        _             -> descendBiM goX st0)
+            return (new++[st])
+
 
         -- check for function literals
         --     they cannot contain anything > CatParameter
